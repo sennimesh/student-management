@@ -50,6 +50,10 @@ $userName = (string) (
                 Manage Students
             </a>
 
+            <a href="add_student.php">
+                Add Student
+            </a>
+
             <form
                 action="logout.php"
                 method="post"

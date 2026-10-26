@@ -3,6 +3,12 @@
 require_once __DIR__ . '/includes/auth.php';
 requireLogin();
 
+$successMessage = (string) (
+    $_SESSION['success_message'] ?? ''
+);
+
+unset($_SESSION['success_message']);
+
 require_once __DIR__ . '/config/database.php';
 
 $result = $conn->query(
@@ -38,14 +44,40 @@ $result = $conn->query(
                 Manage Students
             </a>
 
-            <span class="pending" aria-disabled="true">
+            <a href="add_student.php">
+                Add Student
+            </a>
+
+            <form action="logout.php" method="post" class="logout-form">
+    <input
+        type="hidden"
+        name="csrf_token"
+        value="<?= htmlspecialchars(
+            $_SESSION['csrf_token'],
+            ENT_QUOTES,
+            'UTF-8'
+        ) ?>"
+    >
+
+            <button type="submit" class="logout-button">
                 Logout
-            </span>
-        </nav>
-    </aside>
+            </button>
+        </form>
+                </nav>
+            </aside>
 
     <main class="main-content">
         <h1>Student Records</h1>
+
+        <?php if ($successMessage !== ''): ?>
+    <p class="success-message" role="status">
+        <?= htmlspecialchars(
+            $successMessage,
+            ENT_QUOTES,
+            'UTF-8'
+        ) ?>
+    </p>
+<?php endif; ?>
 
         <p class="welcome">
             View registered student information.
