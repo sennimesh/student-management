@@ -312,3 +312,45 @@ tbody tr:hover {
     background: #dcfce7;
     color: #166534;
 }
+
+.button.danger {
+    background: #b91c1c;
+}
+
+.button.danger:hover {
+    background: #991b1b;
+}
+
+.button:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+.delete-card {
+    max-width: 650px;
+    margin-top: 24px;
+    padding: 24px;
+    background: white;
+    border: 1px solid #fecaca;
+    border-radius: 10px;
+}
+
+.delete-card h2 {
+    margin-bottom: 8px;
+    font-size: 22px;
+}
+
+.delete-warning {
+    margin-bottom: 20px;
+    color: #991b1b;
+}
+
+.student-details dt {
+    margin-top: 12px;
+    font-weight: bold;
+}
+
+.student-details dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+}

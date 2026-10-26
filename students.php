@@ -3,28 +3,61 @@
 require_once __DIR__ . '/includes/auth.php';
 requireLogin();
 
+require_once __DIR__ . '/config/database.php';
+
+function e(string $value): string
+{
+    return htmlspecialchars(
+        $value,
+        ENT_QUOTES | ENT_SUBSTITUTE,
+        'UTF-8'
+    );
+}
+
 $successMessage = (string) (
     $_SESSION['success_message'] ?? ''
 );
 
 unset($_SESSION['success_message']);
 
-require_once __DIR__ . '/config/database.php';
+// Read all student records into an array.
+$students = [];
 
-$result = $conn->query(
-    'SELECT id, student_id, student_name, email,
-            department, academic_year
-     FROM students
-     ORDER BY id DESC'
-);
+try {
+    $result = $conn->query(
+        'SELECT id, student_id, student_name,
+                email, department, academic_year
+         FROM students
+         ORDER BY id DESC'
+    );
+
+    while ($row = $result->fetch_assoc()) {
+        $students[] = $row;
+    }
+
+    $result->free();
+
+} catch (mysqli_sql_exception $exception) {
+    error_log($exception->getMessage());
+
+    http_response_code(500);
+    exit('Unable to load student records.');
+}
+
+$conn->close();
+
+$totalStudents = count($students);
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
     <title>Student Records</title>
 
@@ -48,40 +81,40 @@ $result = $conn->query(
                 Add Student
             </a>
 
-            <form action="logout.php" method="post" class="logout-form">
-    <input
-        type="hidden"
-        name="csrf_token"
-        value="<?= htmlspecialchars(
-            $_SESSION['csrf_token'],
-            ENT_QUOTES,
-            'UTF-8'
-        ) ?>"
-    >
+            <form
+                action="logout.php"
+                method="post"
+                class="logout-form"
+            >
+                <input
+                    type="hidden"
+                    name="csrf_token"
+                    value="<?= e($_SESSION['csrf_token']) ?>"
+                >
 
-            <button type="submit" class="logout-button">
-                Logout
-            </button>
-        </form>
-                </nav>
-            </aside>
+                <button
+                    type="submit"
+                    class="logout-button"
+                >
+                    Logout
+                </button>
+            </form>
+        </nav>
+    </aside>
 
     <main class="main-content">
         <h1>Student Records</h1>
 
-        <?php if ($successMessage !== ''): ?>
-    <p class="success-message" role="status">
-        <?= htmlspecialchars(
-            $successMessage,
-            ENT_QUOTES,
-            'UTF-8'
-        ) ?>
-    </p>
-<?php endif; ?>
-
         <p class="welcome">
-            View registered student information.
+            Registered students:
+            <strong><?= $totalStudents ?></strong>
         </p>
+
+        <?php if ($successMessage !== ''): ?>
+            <p class="success-message" role="status">
+                <?= e($successMessage) ?>
+            </p>
+        <?php endif; ?>
 
         <div class="table-wrapper">
             <table>
@@ -93,21 +126,22 @@ $result = $conn->query(
                         <th scope="col">Email</th>
                         <th scope="col">Department</th>
                         <th scope="col">Academic Year</th>
+                        <th scope="col">Actions</th>
                     </tr>
                 </thead>
 
                 <tbody>
-                    <?php if ($result->num_rows === 0): ?>
+                    <?php if ($students === []): ?>
 
                         <tr>
-                            <td colspan="6" class="empty-state">
+                            <td colspan="7" class="empty-state">
                                 No students registered yet.
                             </td>
                         </tr>
 
                     <?php else: ?>
 
-                        <?php while ($student = $result->fetch_assoc()): ?>
+                        <?php foreach ($students as $student): ?>
 
                             <tr>
                                 <td>
@@ -115,43 +149,43 @@ $result = $conn->query(
                                 </td>
 
                                 <td>
-                                    <?= htmlspecialchars(
-                                        $student['student_id'],
-                                        ENT_QUOTES,
-                                        'UTF-8'
-                                    ) ?>
+                                    <?= e((string) $student['student_id']) ?>
                                 </td>
 
                                 <td>
-                                    <?= htmlspecialchars(
-                                        $student['student_name'],
-                                        ENT_QUOTES,
-                                        'UTF-8'
-                                    ) ?>
+                                    <?= e((string) $student['student_name']) ?>
                                 </td>
 
                                 <td>
-                                    <?= htmlspecialchars(
-                                        $student['email'],
-                                        ENT_QUOTES,
-                                        'UTF-8'
-                                    ) ?>
+                                    <?= e((string) $student['email']) ?>
                                 </td>
 
                                 <td>
-                                    <?= htmlspecialchars(
-                                        $student['department'],
-                                        ENT_QUOTES,
-                                        'UTF-8'
-                                    ) ?>
+                                    <?= e((string) $student['department']) ?>
                                 </td>
 
                                 <td>
                                     <?= (int) $student['academic_year'] ?>
                                 </td>
+
+                                <td>
+                                    <a
+                                        href="edit_student.php?id=<?= (int) $student['id'] ?>"
+                                        class="button"
+                                    >
+                                        Edit
+                                    </a>
+
+                                    <a
+                                        href="delete_student.php?id=<?= (int) $student['id'] ?>"
+                                        class="button danger"
+                                    >
+                                        Delete
+                                    </a>
+                                </td>
                             </tr>
 
-                        <?php endwhile; ?>
+                        <?php endforeach; ?>
 
                     <?php endif; ?>
                 </tbody>
@@ -161,6 +195,3 @@ $result = $conn->query(
 
 </body>
 </html>
-
-<?php
-$conn->close();
